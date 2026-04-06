@@ -13,8 +13,40 @@ export default function Products() {
         arrival_date: '',
         department_id: '',
     });
+    const [errors, setErrors] = useState({});
     const [isEditing, setIsEditing] = useState(false);
     const [editId, setEditId] = useState(null);
+
+    const validateFormData = (data) => {
+        const fieldErrors = {};
+        const name = data.name.trim();
+        const supplier = data.supplier.trim();
+        const retailPrice = Number(data.retail_price);
+        const arrivalDate = data.arrival_date;
+        const departmentId = Number(data.department_id);
+
+        if (!name) {
+            fieldErrors.name = 'Введите название товара';
+        }
+
+        if (!supplier) {
+            fieldErrors.supplier = 'Введите поставщика';
+        }
+
+        if (!Number.isFinite(retailPrice) || retailPrice <= 0) {
+            fieldErrors.retail_price = 'Цена должна быть больше 0';
+        }
+
+        if (!arrivalDate) {
+            fieldErrors.arrival_date = 'Укажите дату поступления';
+        }
+
+        if (!Number.isInteger(departmentId) || departmentId <= 0) {
+            fieldErrors.department_id = 'Выберите отдел';
+        }
+
+        return fieldErrors;
+    };
 
     async function loadItems() {
         try {
@@ -43,11 +75,28 @@ export default function Products() {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+
+        const validationErrors = validateFormData(formData);
+        if (Object.keys(validationErrors).length > 0) {
+            setErrors(validationErrors);
+            return;
+        }
+
+        setErrors({});
+
+        const payload = {
+            name: formData.name.trim(),
+            supplier: formData.supplier.trim(),
+            retail_price: Number(formData.retail_price),
+            arrival_date: formData.arrival_date,
+            department_id: Number(formData.department_id),
+        };
+
         try {
             if (isEditing) {
-                await updateProduct(editId, formData);
+                await updateProduct(editId, payload);
             } else {
-                await createProduct(formData);
+                await createProduct(payload);
             }
             setFormData({ name: '', supplier: '', retail_price: '', arrival_date: '', department_id: '' });
             setIsEditing(false);
@@ -62,10 +111,11 @@ export default function Products() {
         setFormData({
             name: item.name,
             supplier: item.supplier,
-            retail_price: (item.retail_price ?? ''),
+            retail_price: item.retail_price ?? '',
             arrival_date: item.arrival_date,
             department_id: String(item.department_id),
         });
+        setErrors({});
         setIsEditing(true);
         setEditId(item.id);
     };
@@ -94,20 +144,34 @@ export default function Products() {
                     <input
                         required
                         type='text'
-                        className='w-full border rounded-lg p-2 focus:ring-2 focus:ring-blue-500'
+                        maxLength={120}
+                        className={`w-full border rounded-lg p-2 focus:ring-2 focus:ring-blue-500 ${errors.name ? 'border-red-500' : ''}`}
                         value={formData.name}
-                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                        onChange={(e) => {
+                            setFormData({ ...formData, name: e.target.value });
+                            if (errors.name) {
+                                setErrors({ ...errors, name: '' });
+                            }
+                        }}
                     />
+                    {errors.name && <p className='mt-1 text-sm text-red-600'>{errors.name}</p>}
                 </div>
                 <div>
                     <label className='block text-sm font-medium mb-1 text-gray-700'>Поставщик</label>
                     <input
                         required
                         type='text'
-                        className='w-full border rounded-lg p-2 focus:ring-2 focus:ring-blue-500'
+                        maxLength={120}
+                        className={`w-full border rounded-lg p-2 focus:ring-2 focus:ring-blue-500 ${errors.supplier ? 'border-red-500' : ''}`}
                         value={formData.supplier}
-                        onChange={(e) => setFormData({ ...formData, supplier: e.target.value })}
+                        onChange={(e) => {
+                            setFormData({ ...formData, supplier: e.target.value });
+                            if (errors.supplier) {
+                                setErrors({ ...errors, supplier: '' });
+                            }
+                        }}
                     />
+                    {errors.supplier && <p className='mt-1 text-sm text-red-600'>{errors.supplier}</p>}
                 </div>
                 <div>
                     <label className='block text-sm font-medium mb-1 text-gray-700'>Розничная Цена (₽)</label>
@@ -115,28 +179,46 @@ export default function Products() {
                         required
                         type='number'
                         step='0.01'
-                        className='w-full border rounded-lg p-2 focus:ring-2 focus:ring-blue-500'
+                        min='0.01'
+                        className={`w-full border rounded-lg p-2 focus:ring-2 focus:ring-blue-500 ${errors.retail_price ? 'border-red-500' : ''}`}
                         value={formData.retail_price}
-                        onChange={(e) => setFormData({ ...formData, retail_price: e.target.value })}
+                        onChange={(e) => {
+                            setFormData({ ...formData, retail_price: e.target.value });
+                            if (errors.retail_price) {
+                                setErrors({ ...errors, retail_price: '' });
+                            }
+                        }}
                     />
+                    {errors.retail_price && <p className='mt-1 text-sm text-red-600'>{errors.retail_price}</p>}
                 </div>
                 <div>
                     <label className='block text-sm font-medium mb-1 text-gray-700'>Дата поступления</label>
                     <input
                         required
                         type='date'
-                        className='w-full border rounded-lg p-2 focus:ring-2 focus:ring-blue-500'
+                        className={`w-full border rounded-lg p-2 focus:ring-2 focus:ring-blue-500 ${errors.arrival_date ? 'border-red-500' : ''}`}
                         value={formData.arrival_date}
-                        onChange={(e) => setFormData({ ...formData, arrival_date: e.target.value })}
+                        onChange={(e) => {
+                            setFormData({ ...formData, arrival_date: e.target.value });
+                            if (errors.arrival_date) {
+                                setErrors({ ...errors, arrival_date: '' });
+                            }
+                        }}
                     />
+                    {errors.arrival_date && <p className='mt-1 text-sm text-red-600'>{errors.arrival_date}</p>}
                 </div>
                 <div>
                     <label className='block text-sm font-medium mb-1 text-gray-700'>Отдел</label>
                     <select
                         required
-                        className='w-full border rounded-lg p-2 focus:ring-2 focus:ring-blue-500'
+                        className={`w-full border rounded-lg p-2 focus:ring-2 focus:ring-blue-500 ${errors.department_id ? 'border-red-500' : ''}`}
                         value={formData.department_id}
-                        onChange={(e) => setFormData({ ...formData, department_id: e.target.value })}
+                        onChange={(e) => {
+                            setFormData({ ...formData, department_id: e.target.value });
+                            if (errors.department_id) {
+                                setErrors({ ...errors, department_id: '' });
+                            }
+                        }}
                     >
                         <option value=''>Выберите отдел</option>
                         {departments.map((dep) => (
@@ -145,6 +227,7 @@ export default function Products() {
                             </option>
                         ))}
                     </select>
+                    {errors.department_id && <p className='mt-1 text-sm text-red-600'>{errors.department_id}</p>}
                 </div>
                 <div className='lg:col-span-3 flex justify-end'>
                     <button

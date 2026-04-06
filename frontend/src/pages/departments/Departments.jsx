@@ -5,8 +5,40 @@ import { getDepartments, createDepartment, updateDepartment, removeDepartment } 
 export default function Departments() {
     const [items, setItems] = useState([]);
     const [formData, setFormData] = useState({ name: '', boss_name: '', phone: '', floor: '' });
+    const [errors, setErrors] = useState({});
     const [isEditing, setIsEditing] = useState(false);
     const [editId, setEditId] = useState(null);
+
+    const validateFormData = (data) => {
+        const fieldErrors = {};
+        const name = data.name.trim();
+        const bossName = data.boss_name.trim();
+        const phone = data.phone.trim();
+        const floor = Number(data.floor);
+        const digitsOnly = phone.replace(/\D/g, '');
+
+        if (!name) {
+            fieldErrors.name = 'Введите название отдела';
+        }
+
+        if (!bossName) {
+            fieldErrors.boss_name = 'Введите ФИО начальника';
+        } else if (bossName.length < 3) {
+            fieldErrors.boss_name = 'ФИО начальника должно быть не короче 3 символов';
+        }
+
+        if (!phone) {
+            fieldErrors.phone = 'Введите телефон';
+        } else if (!/^\+?[\d\s()-]{10,20}$/.test(phone) || digitsOnly.length < 10 || digitsOnly.length > 15) {
+            fieldErrors.phone = 'Введите корректный телефон (10-15 цифр)';
+        }
+
+        if (!Number.isInteger(floor) || floor < 1 || floor > 200) {
+            fieldErrors.floor = 'Этаж должен быть целым числом от 1 до 200';
+        }
+
+        return fieldErrors;
+    };
 
     async function loadItems() {
         try {
@@ -25,11 +57,27 @@ export default function Departments() {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+
+        const validationErrors = validateFormData(formData);
+        if (Object.keys(validationErrors).length > 0) {
+            setErrors(validationErrors);
+            return;
+        }
+
+        setErrors({});
+
+        const payload = {
+            name: formData.name.trim(),
+            boss_name: formData.boss_name.trim(),
+            phone: formData.phone.trim(),
+            floor: Number(formData.floor),
+        };
+
         try {
             if (isEditing) {
-                await updateDepartment(editId, formData);
+                await updateDepartment(editId, payload);
             } else {
-                await createDepartment(formData);
+                await createDepartment(payload);
             }
             setFormData({ name: '', boss_name: '', phone: '', floor: '' });
             setIsEditing(false);
@@ -42,6 +90,7 @@ export default function Departments() {
 
     const handleEdit = (item) => {
         setFormData(item);
+        setErrors({});
         setIsEditing(true);
         setEditId(item.id);
     };
@@ -70,40 +119,69 @@ export default function Departments() {
                     <input
                         required
                         type='text'
-                        className='w-full border rounded-lg p-2 focus:ring-2 focus:ring-blue-500'
+                        maxLength={100}
+                        className={`w-full border rounded-lg p-2 focus:ring-2 focus:ring-blue-500 ${errors.name ? 'border-red-500' : ''}`}
                         value={formData.name}
-                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                        onChange={(e) => {
+                            setFormData({ ...formData, name: e.target.value });
+                            if (errors.name) {
+                                setErrors({ ...errors, name: '' });
+                            }
+                        }}
                     />
+                    {errors.name && <p className='mt-1 text-sm text-red-600'>{errors.name}</p>}
                 </div>
                 <div>
                     <label className='block text-sm font-medium mb-1 text-gray-700'>ФИО Начальника</label>
                     <input
                         required
                         type='text'
-                        className='w-full border rounded-lg p-2 focus:ring-2 focus:ring-blue-500'
+                        maxLength={120}
+                        className={`w-full border rounded-lg p-2 focus:ring-2 focus:ring-blue-500 ${errors.boss_name ? 'border-red-500' : ''}`}
                         value={formData.boss_name}
-                        onChange={(e) => setFormData({ ...formData, boss_name: e.target.value })}
+                        onChange={(e) => {
+                            setFormData({ ...formData, boss_name: e.target.value });
+                            if (errors.boss_name) {
+                                setErrors({ ...errors, boss_name: '' });
+                            }
+                        }}
                     />
+                    {errors.boss_name && <p className='mt-1 text-sm text-red-600'>{errors.boss_name}</p>}
                 </div>
                 <div>
                     <label className='block text-sm font-medium mb-1 text-gray-700'>Телефон</label>
                     <input
                         required
                         type='text'
-                        className='w-full border rounded-lg p-2 focus:ring-2 focus:ring-blue-500'
+                        maxLength={20}
+                        className={`w-full border rounded-lg p-2 focus:ring-2 focus:ring-blue-500 ${errors.phone ? 'border-red-500' : ''}`}
                         value={formData.phone}
-                        onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                        onChange={(e) => {
+                            setFormData({ ...formData, phone: e.target.value });
+                            if (errors.phone) {
+                                setErrors({ ...errors, phone: '' });
+                            }
+                        }}
                     />
+                    {errors.phone && <p className='mt-1 text-sm text-red-600'>{errors.phone}</p>}
                 </div>
                 <div>
                     <label className='block text-sm font-medium mb-1 text-gray-700'>Этаж</label>
                     <input
                         required
                         type='number'
-                        className='w-full border rounded-lg p-2 focus:ring-2 focus:ring-blue-500'
+                        min='1'
+                        max='200'
+                        className={`w-full border rounded-lg p-2 focus:ring-2 focus:ring-blue-500 ${errors.floor ? 'border-red-500' : ''}`}
                         value={formData.floor}
-                        onChange={(e) => setFormData({ ...formData, floor: e.target.value })}
+                        onChange={(e) => {
+                            setFormData({ ...formData, floor: e.target.value });
+                            if (errors.floor) {
+                                setErrors({ ...errors, floor: '' });
+                            }
+                        }}
                     />
+                    {errors.floor && <p className='mt-1 text-sm text-red-600'>{errors.floor}</p>}
                 </div>
                 <div className='md:col-span-2 flex justify-end'>
                     <button

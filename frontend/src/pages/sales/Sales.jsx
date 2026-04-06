@@ -7,8 +7,35 @@ export default function Sales() {
     const [items, setItems] = useState([]);
     const [products, setProducts] = useState([]);
     const [formData, setFormData] = useState({ sale_date: '', product_id: '', quantity: '', retail_price: '' });
+    const [errors, setErrors] = useState({});
     const [isEditing, setIsEditing] = useState(false);
     const [editId, setEditId] = useState(null);
+
+    const validateFormData = (data) => {
+        const fieldErrors = {};
+        const saleDate = data.sale_date;
+        const productId = Number(data.product_id);
+        const quantity = Number(data.quantity);
+        const retailPrice = Number(data.retail_price);
+
+        if (!saleDate) {
+            fieldErrors.sale_date = 'Укажите дату продажи';
+        }
+
+        if (!Number.isInteger(productId) || productId <= 0) {
+            fieldErrors.product_id = 'Выберите товар';
+        }
+
+        if (!Number.isInteger(quantity) || quantity <= 0) {
+            fieldErrors.quantity = 'Количество должно быть целым числом больше 0';
+        }
+
+        if (!Number.isFinite(retailPrice) || retailPrice <= 0) {
+            fieldErrors.retail_price = 'Цена должна быть больше 0';
+        }
+
+        return fieldErrors;
+    };
 
     const formatPrice = (value) => {
         const numeric = Number(value);
@@ -45,11 +72,27 @@ export default function Sales() {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+
+        const validationErrors = validateFormData(formData);
+        if (Object.keys(validationErrors).length > 0) {
+            setErrors(validationErrors);
+            return;
+        }
+
+        setErrors({});
+
+        const payload = {
+            sale_date: formData.sale_date,
+            product_id: Number(formData.product_id),
+            quantity: Number(formData.quantity),
+            retail_price: Number(formData.retail_price),
+        };
+
         try {
             if (isEditing) {
-                await updateSale(editId, formData);
+                await updateSale(editId, payload);
             } else {
-                await createSale(formData);
+                await createSale(payload);
             }
             setFormData({ sale_date: '', product_id: '', quantity: '', retail_price: '' });
             setIsEditing(false);
@@ -67,6 +110,7 @@ export default function Sales() {
             quantity: item.quantity,
             retail_price: item.retail_price ?? '',
         });
+        setErrors({});
         setIsEditing(true);
         setEditId(item.id);
     };
@@ -91,16 +135,22 @@ export default function Sales() {
                     <input
                         required
                         type='date'
-                        className='w-full border rounded-lg p-2 focus:ring-2 focus:ring-blue-500'
+                        className={`w-full border rounded-lg p-2 focus:ring-2 focus:ring-blue-500 ${errors.sale_date ? 'border-red-500' : ''}`}
                         value={formData.sale_date}
-                        onChange={(e) => setFormData({ ...formData, sale_date: e.target.value })}
+                        onChange={(e) => {
+                            setFormData({ ...formData, sale_date: e.target.value });
+                            if (errors.sale_date) {
+                                setErrors({ ...errors, sale_date: '' });
+                            }
+                        }}
                     />
+                    {errors.sale_date && <p className='mt-1 text-sm text-red-600'>{errors.sale_date}</p>}
                 </div>
                 <div>
                     <label className='block text-sm font-medium mb-1 text-gray-700'>Товар</label>
                     <select
                         required
-                        className='w-full border rounded-lg p-2 focus:ring-2 focus:ring-blue-500'
+                        className={`w-full border rounded-lg p-2 focus:ring-2 focus:ring-blue-500 ${errors.product_id ? 'border-red-500' : ''}`}
                         value={formData.product_id}
                         onChange={(e) => {
                             const selectedId = e.target.value;
@@ -110,6 +160,9 @@ export default function Sales() {
                                 product_id: selectedId,
                                 retail_price: selectedProduct ? String(selectedProduct.retail_price) : '',
                             });
+                            if (errors.product_id || errors.retail_price) {
+                                setErrors({ ...errors, product_id: '', retail_price: '' });
+                            }
                         }}
                     >
                         <option value=''>Выберите товар</option>
@@ -119,16 +172,25 @@ export default function Sales() {
                             </option>
                         ))}
                     </select>
+                    {errors.product_id && <p className='mt-1 text-sm text-red-600'>{errors.product_id}</p>}
                 </div>
                 <div>
                     <label className='block text-sm font-medium mb-1 text-gray-700'>Кол-во шт проданных</label>
                     <input
                         required
                         type='number'
-                        className='w-full border rounded-lg p-2 focus:ring-2 focus:ring-blue-500'
+                        min='1'
+                        step='1'
+                        className={`w-full border rounded-lg p-2 focus:ring-2 focus:ring-blue-500 ${errors.quantity ? 'border-red-500' : ''}`}
                         value={formData.quantity}
-                        onChange={(e) => setFormData({ ...formData, quantity: e.target.value })}
+                        onChange={(e) => {
+                            setFormData({ ...formData, quantity: e.target.value });
+                            if (errors.quantity) {
+                                setErrors({ ...errors, quantity: '' });
+                            }
+                        }}
                     />
+                    {errors.quantity && <p className='mt-1 text-sm text-red-600'>{errors.quantity}</p>}
                 </div>
                 <div>
                     <label className='block text-sm font-medium mb-1 text-gray-700'>Розничная цена (₽)</label>
@@ -136,10 +198,17 @@ export default function Sales() {
                         required
                         type='number'
                         step='0.01'
-                        className='w-full border rounded-lg p-2 focus:ring-2 focus:ring-blue-500'
+                        min='0.01'
+                        className={`w-full border rounded-lg p-2 focus:ring-2 focus:ring-blue-500 ${errors.retail_price ? 'border-red-500' : ''}`}
                         value={formData.retail_price}
-                        onChange={(e) => setFormData({ ...formData, retail_price: e.target.value })}
+                        onChange={(e) => {
+                            setFormData({ ...formData, retail_price: e.target.value });
+                            if (errors.retail_price) {
+                                setErrors({ ...errors, retail_price: '' });
+                            }
+                        }}
                     />
+                    {errors.retail_price && <p className='mt-1 text-sm text-red-600'>{errors.retail_price}</p>}
                 </div>
                 <div className='lg:col-span-4 flex justify-end'>
                     <button
