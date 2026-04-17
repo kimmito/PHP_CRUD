@@ -4,8 +4,15 @@ require 'config.php';
 header('Content-Type: application/json');
 
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
-    $month = $_GET['month'] ?? date('m');
-    $year = $_GET['year'] ?? date('Y');
+    $month = isset($_GET['month']) ? intval($_GET['month']) : intval(date('m'));
+    $year = isset($_GET['year']) ? intval($_GET['year']) : intval(date('Y'));
+
+    if (!validateInt($month, 1, 12)) {
+        badRequest('Invalid month');
+    }
+    if (!validateInt($year, 2000, 2100)) {
+        badRequest('Invalid year');
+    }
 
     $sql = "SELECT
                 d.id AS department_id,

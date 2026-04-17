@@ -36,6 +36,19 @@ switch ($method) {
             : null;
         $sale_date = $input['sale_date'] ?? ($input['date'] ?? date('Y-m-d'));
 
+        if (!validateInt($product_id, 1)) {
+            badRequest('Invalid product_id');
+        }
+        if (!validateInt($quantity, 1)) {
+            badRequest('Invalid quantity');
+        }
+        if ($retail_price !== null && !validateFloat($retail_price, 0.0)) {
+            badRequest('Invalid retail_price');
+        }
+        if (!validateDateYmd($sale_date)) {
+            badRequest('Invalid sale_date (expected YYYY-MM-DD)');
+        }
+
         $stmt = $conn->prepare("INSERT INTO sales (product_id, quantity, retail_price, sale_date) VALUES (?, ?, ?, ?)");
         $stmt->bind_param("iids", $product_id, $quantity, $retail_price, $sale_date);
         
@@ -60,6 +73,22 @@ switch ($method) {
             ? (float)$input['retail_price']
             : null;
         $sale_date = $input['sale_date'] ?? ($input['date'] ?? date('Y-m-d'));
+
+        if (!validateInt($id, 1)) {
+            badRequest('Invalid ID');
+        }
+        if (!validateInt($product_id, 1)) {
+            badRequest('Invalid product_id');
+        }
+        if (!validateInt($quantity, 1)) {
+            badRequest('Invalid quantity');
+        }
+        if ($retail_price !== null && !validateFloat($retail_price, 0.0)) {
+            badRequest('Invalid retail_price');
+        }
+        if (!validateDateYmd($sale_date)) {
+            badRequest('Invalid sale_date (expected YYYY-MM-DD)');
+        }
 
         $stmt = $conn->prepare("UPDATE sales SET product_id=?, quantity=?, retail_price=?, sale_date=? WHERE id=?");
         $stmt->bind_param("iidsi", $product_id, $quantity, $retail_price, $sale_date, $id);

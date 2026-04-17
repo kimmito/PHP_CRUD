@@ -25,6 +25,19 @@ switch ($method) {
         $phone = $input['phone'] ?? '';
         $floor = $input['floor'] ?? 0;
         
+        if (!validateStringRequired($name, 100)) {
+            badRequest('Invalid or missing department name');
+        }
+        if (!validateStringOptional($boss_name, 100)) {
+            badRequest('Invalid boss_name');
+        }
+        if (!validateStringOptional($phone, 30) || ($phone !== '' && !preg_match('/^[0-9+()\-\s]+$/', $phone))) {
+            badRequest('Invalid phone format');
+        }
+        if (!validateInt($floor, -100, 100)) {
+            badRequest('Invalid floor value');
+        }
+        
         $stmt = $conn->prepare("INSERT INTO departments (name, boss_name, phone, floor) VALUES (?, ?, ?, ?)");
         $stmt->bind_param("sssi", $name, $boss_name, $phone, $floor);
         
@@ -47,6 +60,22 @@ switch ($method) {
         $boss_name = $input['boss_name'] ?? '';
         $phone = $input['phone'] ?? '';
         $floor = $input['floor'] ?? 0;
+
+        if (!validateInt($id, 1)) {
+            badRequest('Invalid ID');
+        }
+        if (!validateStringRequired($name, 100)) {
+            badRequest('Invalid or missing department name');
+        }
+        if (!validateStringOptional($boss_name, 100)) {
+            badRequest('Invalid boss_name');
+        }
+        if (!validateStringOptional($phone, 30) || ($phone !== '' && !preg_match('/^[0-9+()\-\s]+$/', $phone))) {
+            badRequest('Invalid phone format');
+        }
+        if (!validateInt($floor, -100, 100)) {
+            badRequest('Invalid floor value');
+        }
 
         $stmt = $conn->prepare("UPDATE departments SET name=?, boss_name=?, phone=?, floor=? WHERE id=?");
         $stmt->bind_param("sssii", $name, $boss_name, $phone, $floor, $id);

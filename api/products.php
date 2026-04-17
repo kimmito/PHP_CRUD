@@ -26,6 +26,22 @@ switch ($method) {
         $arrival_date = $input['arrival_date'] ?? date('Y-m-d');
         $department_id = $input['department_id'] ?? 0;
 
+        if (!validateStringRequired($name, 150)) {
+            badRequest('Invalid or missing product name');
+        }
+        if (!validateStringOptional($supplier, 100)) {
+            badRequest('Invalid supplier');
+        }
+        if (!validateFloat($retail_price, 0.0)) {
+            badRequest('Invalid retail_price');
+        }
+        if (!validateDateYmd($arrival_date)) {
+            badRequest('Invalid arrival_date (expected YYYY-MM-DD)');
+        }
+        if (!validateInt($department_id, 0)) {
+            badRequest('Invalid department_id');
+        }
+
         $stmt = $conn->prepare("INSERT INTO products (name, supplier, retail_price, arrival_date, department_id) VALUES (?, ?, ?, ?, ?)");
         $stmt->bind_param("ssdsi", $name, $supplier, $retail_price, $arrival_date, $department_id);
         
@@ -49,6 +65,25 @@ switch ($method) {
         $retail_price = $input['retail_price'] ?? 0.0;
         $arrival_date = $input['arrival_date'] ?? date('Y-m-d');
         $department_id = $input['department_id'] ?? 0;
+
+        if (!validateInt($id, 1)) {
+            badRequest('Invalid ID');
+        }
+        if (!validateStringRequired($name, 150)) {
+            badRequest('Invalid or missing product name');
+        }
+        if (!validateStringOptional($supplier, 100)) {
+            badRequest('Invalid supplier');
+        }
+        if (!validateFloat($retail_price, 0.0)) {
+            badRequest('Invalid retail_price');
+        }
+        if (!validateDateYmd($arrival_date)) {
+            badRequest('Invalid arrival_date (expected YYYY-MM-DD)');
+        }
+        if (!validateInt($department_id, 0)) {
+            badRequest('Invalid department_id');
+        }
 
         $stmt = $conn->prepare("UPDATE products SET name=?, supplier=?, retail_price=?, arrival_date=?, department_id=? WHERE id=?");
         $stmt->bind_param("ssdsii", $name, $supplier, $retail_price, $arrival_date, $department_id, $id);
