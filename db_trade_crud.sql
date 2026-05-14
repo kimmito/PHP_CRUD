@@ -12,7 +12,29 @@ DROP TABLE IF EXISTS report;
 DROP TABLE IF EXISTS sales;
 DROP TABLE IF EXISTS products;
 DROP TABLE IF EXISTS departments;
+DROP TABLE IF EXISTS users;
 SET FOREIGN_KEY_CHECKS = 1;
+
+CREATE TABLE users (
+  id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  username VARCHAR(50) NOT NULL,
+  email VARCHAR(150) NOT NULL,
+  full_name VARCHAR(150) NOT NULL,
+  password_hash VARCHAR(255) NOT NULL,
+  role ENUM('guest', 'operator', 'admin') NOT NULL DEFAULT 'guest',
+  status ENUM('pending', 'approved', 'rejected') NOT NULL DEFAULT 'pending',
+  last_login_at DATETIME NULL,
+  previous_login_at DATETIME NULL,
+  login_count INT UNSIGNED NOT NULL DEFAULT 0,
+  remember_token_hash CHAR(64) NULL,
+  remember_expires_at DATETIME NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  UNIQUE KEY uq_users_username (username),
+  UNIQUE KEY uq_users_email (email),
+  KEY idx_users_role_status (role, status),
+  KEY idx_users_remember_token_hash (remember_token_hash)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE departments (
   id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
@@ -59,6 +81,9 @@ CREATE TABLE sales (
     ON UPDATE CASCADE
     ON DELETE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+INSERT INTO users (username, email, full_name, password_hash, role, status) VALUES
+('admin', 'admin@example.com', 'Администратор системы', '$2y$10$NlZPCfyUg20ctZKUJ.n/s.gQzIE50A8hrChmBjjjAg3RKrOt/GIJW', 'admin', 'approved');
 
 INSERT INTO departments (name, boss_name, phone, floor) VALUES
 ('Бытовая техника', 'Иванов И.И.', '+7 (900) 111-22-33', 1),

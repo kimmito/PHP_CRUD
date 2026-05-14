@@ -1,7 +1,10 @@
 <?php
 require 'cors.php';
 require 'config.php';
+require 'auth.php';
 header('Content-Type: application/json');
+
+requireRole($conn, ['admin']);
 
 $method = $_SERVER['REQUEST_METHOD'];
 

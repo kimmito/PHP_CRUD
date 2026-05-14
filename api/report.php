@@ -1,7 +1,10 @@
 <?php
 require 'cors.php';
 require 'config.php';
+require 'auth.php';
 header('Content-Type: application/json');
+
+requireRole($conn, ['admin', 'operator']);
 
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     $month = isset($_GET['month']) ? intval($_GET['month']) : intval(date('m'));

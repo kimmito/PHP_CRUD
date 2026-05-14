@@ -8,6 +8,7 @@ export default function Report() {
     const [rows, setRows] = useState([]);
     const [totalSum, setTotalSum] = useState(0);
     const [availableDates, setAvailableDates] = useState([]);
+    const [datesLoaded, setDatesLoaded] = useState(false);
 
     const monthNames = [
         'январь',
@@ -28,10 +29,24 @@ export default function Report() {
         try {
             const res = await getReportDates();
             if (res && res.status === 'success') {
-                setAvailableDates(res.dates || []);
+                const dates = res.dates || [];
+                setAvailableDates(dates);
+
+                if (dates.length > 0) {
+                    const latestDate = dates.reduce((latest, item) => {
+                        if (item.year > latest.year) return item;
+                        if (item.year === latest.year && item.month > latest.month) return item;
+                        return latest;
+                    }, dates[0]);
+
+                    setYear(latestDate.year);
+                    setMonth(latestDate.month);
+                }
             }
         } catch (e) {
             console.error(e);
+        } finally {
+            setDatesLoaded(true);
         }
     }
 
@@ -59,6 +74,15 @@ export default function Report() {
     }, [availableDates, year, month]);
 
     async function loadReport() {
+        if (!datesLoaded || availableDates.length === 0) {
+            return;
+        }
+
+        const hasSelectedDate = availableDates.some((d) => d.year === year && d.month === month);
+        if (!hasSelectedDate) {
+            return;
+        }
+
         try {
             const res = await getReport(month, year);
             if (res && Array.isArray(res.rows)) {
@@ -70,14 +94,16 @@ export default function Report() {
             }
         } catch (e) {
             console.error(e);
-            alert('Ошибка при загрузке отчета');
+            setRows([]);
+            setTotalSum(0);
         }
     }
     useEffect(() => {
         (async () => {
             await loadReport();
         })();
-    }, [month, year]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [month, year, datesLoaded, availableDates]);
 
     const groupedByDepartment = rows.reduce((acc, item) => {
         const dep = item.department_name || 'Без отдела';

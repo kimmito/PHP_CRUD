@@ -1,7 +1,10 @@
 <?php
 require 'cors.php';
 require 'config.php';
+require 'auth.php';
 header('Content-Type: application/json');
+
+requireRole($conn, ['admin', 'operator']);
 
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     $sql = "SELECT DISTINCT YEAR(sale_date) AS year, MONTH(sale_date) AS month FROM sales ORDER BY year DESC, month ASC";
